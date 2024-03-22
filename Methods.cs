@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Sickhead.Engine.Util;
 using StardewValley;
+using StardewValley.GameData.BigCraftables;
+using StardewValley.GameData.Objects;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using System;
@@ -34,49 +36,51 @@ namespace ImmersiveSprinklers
         }
         private static Object GetSprinkler(TerrainFeature tf, int which, bool nozzle)
         {
-            if(!tf.modData.TryGetValue(sprinklerKey + which, out string sprinklerString))
+            if(!tf.modData.TryGetValue(sprinklerKey + which, out string sprinklerItemId))
                 return null;
             var bc = tf.modData.ContainsKey(bigCraftableKey + which);
-            foreach (var kvp in bc ? Game1.bigCraftablesInformation :  Game1.objectInformation)
+
+            Object obj = null;
+            if (Game1.bigCraftableData.ContainsKey(sprinklerItemId))
             {
-                if (kvp.Value.Equals(sprinklerString) || kvp.Value.StartsWith(sprinklerString + "/"))
+                obj = new Object(Vector2.Zero, sprinklerItemId);
+            }
+            else if (Game1.objectData.ContainsKey(sprinklerItemId))
+            {
+                obj = new Object(sprinklerItemId, 1);
+            }
+
+            if (obj != null)
+            {
+                obj.Location = tf.Location;
+
+                if (nozzle)
                 {
-                    var obj = bc ? new Object(Vector2.Zero, kvp.Key) : new Object(kvp.Key, 1);
-                    if (nozzle)
+                    obj.heldObject.Value = new Object("915", 1);
+                }
+                if(atApi is not null)
+                {
+                    foreach (var kvp2 in tf.modData.Pairs)
                     {
-                        obj.heldObject.Value = new Object(915, 1);
-                    }
-                    if(atApi is not null)
-                    {
-                        foreach (var kvp2 in tf.modData.Pairs)
+                        if(kvp2.Key.EndsWith(which+"") && kvp2.Key.StartsWith(altTexturePrefix))
                         {
-                            if(kvp2.Key.EndsWith(which+"") && kvp2.Key.StartsWith(altTexturePrefix))
-                            {
-                                var key = kvp2.Key.Substring(prefixKey.Length, kvp2.Key.Length - prefixKey.Length - 1);
-                                obj.modData[key] = kvp2.Value;
-                            }
+                            var key = kvp2.Key.Substring(prefixKey.Length, kvp2.Key.Length - prefixKey.Length - 1);
+                            obj.modData[key] = kvp2.Value;
                         }
                     }
-                    if(!tf.modData.TryGetValue(guidKey + which, out var guid))
-                    {
-                        guid = Guid.NewGuid().ToString();
-                        tf.modData[guidKey + which] = guid;
-                    }
-                    sprinklerDict[guid] = obj;
-                    return obj;
                 }
-            }
-            return null;
-        }
-        private static string GetSprinklerString(Object instance)
-        {
-            if (instance.bigCraftable.Value && Game1.bigCraftablesInformation.TryGetValue(instance.ParentSheetIndex, out string str))
-                return str;
-            if (!instance.bigCraftable.Value && Game1.objectInformation.TryGetValue(instance.ParentSheetIndex, out str))
-                return str;
-            return instance.Name;
+                if(!tf.modData.TryGetValue(guidKey + which, out var guid))
+                {
+                    guid = Guid.NewGuid().ToString();
+                    tf.modData[guidKey + which] = guid;
+                }
 
+                sprinklerDict[guid] = obj;
+            }
+
+            return obj;
         }
+
         private static Vector2 GetSprinklerCorner(int i)
         {
             switch (i)
@@ -227,13 +231,13 @@ namespace ImmersiveSprinklers
                 if (tf.modData.ContainsKey(enricherKey + which))
                 {
                     tf.modData.Remove(enricherKey + which);
-                    var e = new Object(913, 1);
+                    var e = new Object("913", 1);
                     TryReturnObject(e, who);
                 }
                 if (tf.modData.ContainsKey(nozzleKey + which))
                 {
                     tf.modData.Remove(nozzleKey + which);
-                    var n = new Object(915, 1);
+                    var n = new Object("915", 1);
                     TryReturnObject(n, who);
 
                 }
@@ -260,16 +264,16 @@ namespace ImmersiveSprinklers
             }
         }
 
-        private static Object GetFertilizer(string fertString)
+        private static Object GetFertilizer(string fertItemId)
         {
-            var fertData = fertString.Split(',');
-            return new Object(int.Parse(fertData[0]), int.Parse(fertData[1]));
+            return new Object(Vector2.Zero, fertItemId);
         }
+
         private static int GetSprinklerRadius(Object obj)
         {
             if (!Config.SprinklerRadii.TryGetValue(obj.Name, out int radius))
                 return obj.GetModifiedRadiusForSprinkler();
-            if (obj.heldObject.Value != null && Utility.IsNormalObjectAtParentSheetIndex((Object)obj.heldObject.Value, 915))
+            if (obj.heldObject.Value != null && Utility.IsNormalObjectAtParentSheetIndex((Object)obj.heldObject.Value, "915"))
             {
                 radius++;
             }
@@ -316,7 +320,7 @@ namespace ImmersiveSprinklers
                 return;
             foreach (Vector2 tile in GetSprinklerTiles(tileLocation, which, radius))
             {
-                obj.ApplySprinkler(environment, tile);
+                obj.ApplySprinkler(tile);
                 if(environment.objects.TryGetValue(tile, out var o) && o is IndoorPot) 
                 {
                     (o as IndoorPot).hoeDirt.Value.state.Value = 1;
@@ -344,25 +348,25 @@ namespace ImmersiveSprinklers
                 {
                     rotation = rotation,
                     delayBeforeAnimationStart = delay,
-                    id = tileLocation.X * 4000f + tileLocation.Y
+                    id = (int)(tileLocation.X * 4000f + tileLocation.Y)
                 });
                 location.temporarySprites.Add(new TemporaryAnimatedSprite(29, position + new Vector2(b, a), Color.White * 0.5f, 4, false, 60f, 100, -1, layerDepth, -1, 0)
                 {
                     rotation = 1.57079637f + rotation,
                     delayBeforeAnimationStart = delay,
-                    id = tileLocation.X * 4000f + tileLocation.Y
+                    id = (int)(tileLocation.X * 4000f + tileLocation.Y)
                 });
                 location.temporarySprites.Add(new TemporaryAnimatedSprite(29, position + new Vector2(-a, b), Color.White * 0.5f, 4, false, 60f, 100, -1, layerDepth, -1, 0)
                 {
                     rotation = 3.14159274f + rotation,
                     delayBeforeAnimationStart = delay,
-                    id = tileLocation.X * 4000f + tileLocation.Y
+                    id = (int)(tileLocation.X * 4000f + tileLocation.Y)
                 });
                 location.temporarySprites.Add(new TemporaryAnimatedSprite(29, position + new Vector2(-b, -a), Color.White * 0.5f, 4, false, 60f, 100, -1, layerDepth, -1, 0)
                 {
                     rotation = 4.712389f + rotation,
                     delayBeforeAnimationStart = delay,
-                    id = tileLocation.X * 4000f + tileLocation.Y
+                    id = (int)(tileLocation.X * 4000f + tileLocation.Y)
                 });
                 return;
             }
@@ -372,7 +376,7 @@ namespace ImmersiveSprinklers
                 {
                     color = Color.White * 0.4f,
                     delayBeforeAnimationStart = delay,
-                    id = tileLocation.X * 4000f + tileLocation.Y,
+                    id = (int)(tileLocation.X * 4000f + tileLocation.Y),
                     layerDepth = layerDepth,
                     scale = 1.3f
                 });
@@ -383,7 +387,7 @@ namespace ImmersiveSprinklers
             {
                 color = Color.White * 0.4f,
                 delayBeforeAnimationStart = delay,
-                id = tileLocation.X * 4000f + tileLocation.Y,
+                id = (int)(tileLocation.X * 4000f + tileLocation.Y),
                 layerDepth = layerDepth,
                 scale = scale
             });
