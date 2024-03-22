@@ -1,22 +1,10 @@
 ﻿{
-  "Name": "Immersive Sprinklers",
-  "Author": "aedenthorn",
-  "Version": "0.8.2",
-  "Description": "Immersive Sprinklers.",
-  "UniqueID": "aedenthorn.ImmersiveSprinklers",
+  "Name": "The Return of Immersive Sprinklers",
+  "Author": "lucaskfreitas",
+  "Version": "1.0.0",
+  "Description": "Immersive Sprinklers (originally by aedenthorn) made compatible with Stardew Valley 1.6",
+  "UniqueID": "lucaskfreitas.ImmersiveSprinklers",
   "EntryDll": "ImmersiveSprinklers.dll",
-  "MinimumApiVersion": "3.15.0",
-  "ModUpdater": {
-    "Repository": "StardewValleyMods",
-    "User": "aedenthorn",
-    "Directory": "_releases",
-    "ModFolder": "ImmersiveSprinklers"
-  },
-  "UpdateKeys": [ "Nexus:15239" ],
-  "Dependencies": [
-    {
-      "UniqueID": "Platonymous.ModUpdater",
-      "IsRequired": false
-    }
-  ]
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [ "Nexus:20796" ]
 }
