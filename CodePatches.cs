@@ -281,7 +281,7 @@ namespace ImmersiveSprinklers
                                 {
                                     SMonitor.Log($"Sprinkler Tile: {tileLocation}", LogLevel.Debug);
 
-                                    var sprinklerObject = new Object(Vector2.Zero, sprinklerItemId);
+                                    var sprinklerObject = GetSprinklerCached(tf, i, tf.modData.ContainsKey(nozzleKey + i));
                                     Game1.player.team.returnedDonations.Add(sprinklerObject);
                                     Game1.player.team.newLostAndFoundItems.Value = true;
                                 }
