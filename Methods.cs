@@ -311,13 +311,15 @@ namespace ImmersiveSprinklers
 
         private static void ActivateSprinkler(GameLocation environment, Vector2 tileLocation, Object obj, int which, bool delay)
         {
-            if (Game1.player.team.SpecialOrderRuleActive("NO_SPRINKLER", null))
-            {
+            if (Game1.player.team.SpecialOrderRuleActive("NO_SPRINKLER", null)
+                || environment is null || obj is null)
                 return;
-            }
+
             int radius = GetSprinklerRadius(obj);
             if (radius < 0)
                 return;
+
+            obj.Location = environment;
             foreach (Vector2 tile in GetSprinklerTiles(tileLocation, which, radius))
             {
                 obj.ApplySprinkler(tile);
@@ -327,8 +329,10 @@ namespace ImmersiveSprinklers
                     o.showNextIndex.Value = true;
                 }
             }
+
             ApplySprinklerAnimation(tileLocation, which, radius, environment, delay ? Game1.random.Next(1000) : 0);
         }
+
         private static void ApplySprinklerAnimation(Vector2 tileLocation, int which, int radius, GameLocation location, int delay)
         {
 
