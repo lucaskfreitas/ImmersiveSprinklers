@@ -112,7 +112,7 @@ namespace ImmersiveSprinklers
                 {
                     SMonitor.Log($"Placing {__instance.Name} at {x},{y}:{which}");
                     location.playSound("woodyStep");
-                    ReturnSprinkler(who, location, placementTile, which);
+                    ReturnSprinkler(who, location, placementTile, which); //This should, in theory, never do anything. However, I'm keeping it here just in case.
                     tf.modData[sprinklerKey + which] = __instance.ItemId;
                     if (__instance.bigCraftable.Value)
                     {
@@ -215,19 +215,27 @@ namespace ImmersiveSprinklers
                 }
             }
         }
-        
+
         [HarmonyPatch(typeof(Utility), nameof(Utility.playerCanPlaceItemHere))]
         public class Utility_playerCanPlaceItemHere_Patch
         {
             public static bool Prefix(GameLocation location, Item item, int x, int y, Farmer f, ref bool __result)
             {
-                if (!Config.EnableMod || item is not Object || !(item as Object).IsSprinkler() || !location.terrainFeatures.TryGetValue(new Vector2(x / 64, y / 64), out var tf) || tf is not HoeDirt)
+                if (!Config.EnableMod || item is not Object || !(item as Object).IsSprinkler())
                     return true;
-                __result = Utility.withinRadiusOfPlayer(x, y, 1, Game1.player);
+
+                Vector2 tile = new(x / 64, y / 64);
+
+                if (!location.terrainFeatures.TryGetValue(tile, out var tf) || tf is not HoeDirt)
+                    return true;
+
+                int which = GetMouseCorner();
+                __result = Utility.withinRadiusOfPlayer(x, y, 1, Game1.player)
+                            && !GetSprinklerTileBool(location, ref tile, ref which, out _);
                 return false;
             }
-
         }
+
         [HarmonyPatch(typeof(Object), nameof(Object.drawPlacementBounds))]
         public class Object_drawPlacementBounds_Patch
         {
