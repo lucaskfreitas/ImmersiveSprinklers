@@ -65,6 +65,7 @@ namespace ImmersiveSprinklers
             Helper.Events.GameLoop.SaveLoaded += GameLoop_SaveLoaded;
             Helper.Events.Input.ButtonPressed += Input_ButtonPressed;
             Helper.Events.Display.RenderedWorld += Display_RenderedWorld;
+            Helper.Events.World.TerrainFeatureListChanged += WorldEventsHandler.TerrainFeatureListChanged;
 
             var harmony = new Harmony(ModManifest.UniqueID);
             harmony.PatchAll();
