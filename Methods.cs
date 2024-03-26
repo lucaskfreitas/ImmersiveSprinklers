@@ -410,8 +410,16 @@ namespace ImmersiveSprinklers
             var instanceName = $"{modelType}_{baseName}";
             var instanceSeasonName = $"{instanceName}_{Game1.currentSeason}";
 
-            bool hasAlt = (bool)AccessTools.Method(textureMgr.GetType(), "DoesObjectHaveAlternativeTexture", new System.Type[] { typeof(string) }).Invoke(textureMgr, new object[] { instanceName });
-            bool hasAltSeason = (bool)AccessTools.Method(textureMgr.GetType(), "DoesObjectHaveAlternativeTexture", new System.Type[] { typeof(string) }).Invoke(textureMgr, new object[] { instanceSeasonName });
+            bool hasAlt = (bool)AccessTools.Method(
+                textureMgr.GetType(),
+                "DoesObjectHaveAlternativeTexture",
+                new System.Type[] { typeof(string), typeof(bool) }).Invoke(textureMgr, new object[] { instanceName, false });
+
+            bool hasAltSeason = (bool)AccessTools.Method(
+                textureMgr.GetType(),
+                "DoesObjectHaveAlternativeTexture",
+                new System.Type[] { typeof(string), typeof(bool) }).Invoke(textureMgr, new object[] { instanceSeasonName, false });
+
             MethodInfo assignModData = AccessTools.Method(atApi.GetType().Assembly.GetType("AlternativeTextures.Framework.Patches.PatchTemplate"), "AssignModData").MakeGenericMethod(typeof(Object));
             if ((bool)AccessTools.Method(atApi.GetType().Assembly.GetType("AlternativeTextures.Framework.Patches.PatchTemplate"), "HasCachedTextureName").MakeGenericMethod(typeof(Object)).Invoke(null, new object[] { obj, false }))
             {
