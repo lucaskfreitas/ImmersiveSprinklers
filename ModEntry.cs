@@ -116,7 +116,9 @@ namespace ImmersiveSprinklers
         {
             if (!Config.EnableMod)
                 return;
-            if (e.Button == Config.PickupButton && Context.CanPlayerMove)
+
+            if (e.Button == Config.PickupButton && Context.CanPlayerMove
+                && Utility.withinRadiusOfPlayer((int)e.Cursor.AbsolutePixels.X, (int)e.Cursor.AbsolutePixels.Y, 1, Game1.player))
             {
                 int which = GetMouseCorner();
                 if (ReturnSprinkler(Game1.player, Game1.currentLocation, Game1.currentCursorTile, which))
@@ -124,6 +126,7 @@ namespace ImmersiveSprinklers
                     Helper.Input.Suppress(e.Button);
                 }
             }
+
             if (e.Button == Config.ActivateButton && Context.CanPlayerMove)
             {
                 int which = GetMouseCorner();
