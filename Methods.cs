@@ -1,11 +1,7 @@
-﻿
-using HarmonyLib;
+﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Sickhead.Engine.Util;
 using StardewValley;
-using StardewValley.GameData.BigCraftables;
-using StardewValley.GameData.Objects;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using System;
@@ -18,8 +14,7 @@ namespace ImmersiveSprinklers
 {
     public partial class ModEntry
     {
-
-        private static Object GetSprinklerCached(TerrainFeature tf, int which, bool nozzle)
+        public static Object GetSprinklerCached(TerrainFeature tf, int which, bool nozzle)
         {
             if (!tf.modData.TryGetValue(guidKey + which, out var guid))
             {
@@ -34,6 +29,7 @@ namespace ImmersiveSprinklers
             }
             return obj;
         }
+
         private static Object GetSprinkler(TerrainFeature tf, int which, bool nozzle)
         {
             if(!tf.modData.TryGetValue(sprinklerKey + which, out string sprinklerItemId))
@@ -448,7 +444,6 @@ namespace ImmersiveSprinklers
             AccessTools.Method(atApi.GetType().Assembly.GetType("AlternativeTextures.Framework.Patches.PatchTemplate"), "AssignDefaultModData").MakeGenericMethod(typeof(Object)).Invoke(null, new object[] { obj, instanceSeasonName, true, obj.bigCraftable.Value });
         }
 
-
         private static Texture2D GetAltTextureForObject(Object obj, out Rectangle sourceRect)
         {
             sourceRect = new Rectangle();
@@ -516,6 +511,42 @@ namespace ImmersiveSprinklers
             var h = (int)AccessTools.Property(textureModel.GetType(), "TextureHeight").GetValue(textureModel);
             sourceRect = new Rectangle(xTileOffset * w, textureOffset, w, h);
             return (Texture2D)AccessTools.Method(textureModel.GetType(), "GetTexture").Invoke(textureModel, new object[] { textureVariation });
+        }
+
+        private static bool HandleAxeAndPickaxeFunction(GameLocation location, int x, int y)
+        {
+            int tileX = x / 64;
+            int tileY = y / 64;
+            if (!IsTileNextToSprinkler(location, tileX, tileY))
+                return true;
+
+            if (Game1.currentCursorTile == new Vector2(tileX, tileY))
+            {
+                int which = GetMouseCorner();
+
+                if (ReturnSprinkler(Game1.player, location, Game1.currentCursorTile, which))
+                {
+                    location.playSound("hammer");
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsTileNextToSprinkler(GameLocation location, int x, int y)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                int j = i;
+                Vector2 tile = new(x, y);
+
+                if (GetSprinklerTileBool(location, ref tile, ref j, out _))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
