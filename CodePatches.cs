@@ -265,8 +265,30 @@ namespace ImmersiveSprinklers
 
                 return false;
             }
-
         }
+
+        [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.GetDirtDecayChance))]
+        public class GameLocation_GetDirtDecayChance_Patch
+        {
+            public static bool Prefix(GameLocation __instance, Vector2 tile, ref double __result)
+            {
+                if (Config.EnableMod)
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (__instance.terrainFeatures.TryGetValue(tile, out TerrainFeature tf)
+                            && tf.modData.ContainsKey(sprinklerKey + i))
+                        {
+                            __result = 0.0;
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+        }
+
         [HarmonyPatch(typeof(GameLocation), "initNetFields")]
         public class GameLocation_initNetFields_Patch
         {
