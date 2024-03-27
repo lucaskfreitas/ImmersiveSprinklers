@@ -267,7 +267,43 @@ namespace ImmersiveSprinklers
             }
 
         }
+        [HarmonyPatch(typeof(GameLocation), "initNetFields")]
+        public class GameLocation_initNetFields_Patch
+        {
+            public static void Postfix(GameLocation __instance)
+            {
+                if (!Config.EnableMod)
+                    return;
+                __instance.terrainFeatures.OnValueRemoved += delegate (Vector2 tileLocation, TerrainFeature tf)
+                {
+                    if (tf is not HoeDirt)
+                        return;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (tf.modData.TryGetValue(sprinklerKey + i, out var sprinklerItemId))
+                        {
+                            try
+                            {
+                                SMonitor.Log("A sprinkler is being deleted! You can retrieve it from the Lost and Found.", LogLevel.Warn);
+                                try
+                                {
+                                    SMonitor.Log($"Sprinkler Tile: {tileLocation}", LogLevel.Debug);
 
+                                    var sprinklerObject = GetSprinklerCached(tf, i, tf.modData.ContainsKey(nozzleKey + i));
+                                    Game1.player.team.returnedDonations.Add(sprinklerObject);
+                                    Game1.player.team.newLostAndFoundItems.Value = true;
+                                }
+                                catch (Exception ex)
+                                {
+                                    SMonitor.Log($"Error occurred when trying to save deleted sprinkler to Lost and Found: {ex}", LogLevel.Error);
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                };
+            }
+        }
         [HarmonyPatch(typeof(HoeDirt), nameof(HoeDirt.dayUpdate))]
         public class HoeDirt_dayUpdate_Patch
         {
